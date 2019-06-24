@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# @File       : WYNYtest.py
-# @Date       : 2019-05-28
+# @File       : XGboost.py
+# @Date       : 2019-05-29
 # @Author     : Jerold
 # @Description: for the test of WYNY
 
@@ -12,7 +12,6 @@ import xgboost as xgb
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error,mean_squared_error,roc_curve,auc,precision_score,recall_score,accuracy_score
 from datetime import datetime
-import tensorflow as tf
 
 MY_PATH = r"G:\111MyData\test_data201803.csv"
 
@@ -22,22 +21,6 @@ def check_data(data):
 
     data[['KWH']].boxplot()
     plt.show()
-
-    train_zero = train[train['KWH'] == 0]
-    train_Nonezero = train[train['KWH'] != 0]
-
-    #zero_groupby_month = train_zero[['KWH','month']].groupby(by='month')
-
-    #nonez_groupby_month.boxplot()
-    #print(len(train_Nonezero),len(train_Nonezero[train_Nonezero['KWH']<2100]))
-    #train_Nonezero.boxplot(column='KWH')
-    #plt.show()
-
-    #print(nonez_groupby_month.describe())
-    #print(zero_groupby_month.count())
-
-    #print(len(train_zero))
-    #print(len(train))
 
 def SearchCV(X_train, X_test, Y_train, Y_test):
 
@@ -156,13 +139,7 @@ def deal_data_forXgBoost(data,fronts=3):
 
 # 评价二分类模型
 def evaluate_mod_binary(mod,X_to_predict_b,Y_to_predict_b):
-    """
-    # 评价二分类（判断是否是否会出现异常）模型的数据
-    :param mod: 模型实例
-    :param X_to_predict_b: 需要预测数据的特征集合X
-    :param Y_to_predict_b: 需要预测数据的真实结果 Y
-    :return: 预测结果 Y_hat
-    """
+
     Y_pre = mod.predict(X_to_predict_b)
     y_score = mod.predict_proba(X_to_predict_b)
     fpr,tpr,thresholds = roc_curve(Y_to_predict_b, y_score[:,1])
@@ -178,21 +155,13 @@ def evaluate_mod_binary(mod,X_to_predict_b,Y_to_predict_b):
 
 # 评价回归模型
 def evaluate_mod_reg(mod,X_to_predict,Y_to_predict):
-    """
-    评价回归模型的效果
-    :param mod: 模型实例
-    :param X_to_predict: 需要预测的X数据
-    :param Y_to_predict: 需要预测的Y数据
-    :return: 返回预测数据 Y_hat
-    """
+
     predict_Y = mod.predict(X_to_predict)
     print(mean_absolute_error(Y_to_predict.values,predict_Y))
     return predict_Y
 
+# 主运行函数
 def program():
-    """
-    主运行函数
-    """
 
     data = pd.read_csv(MY_PATH,index_col=0)
 
@@ -204,9 +173,9 @@ def program():
     print("---------------------------------------------------------")
     mod = use_xgboost(X_train, X_test, Y_train, Y_test)
     predict_y = evaluate_mod_reg(mod,X_to_predict,Y_to_predict)
-    print('res:')
     predict_y[predict_y_b == 1] = 0
-    print(mean_absolute_error(Y_to_predict,predict_y))
+    mae = mean_absolute_error(Y_to_predict, predict_y)
+    print('MAPE:',mae / Y_to_predict.mean() * 100,'MAE:',mae)
     plt.figure()
     plt.plot(Y_to_predict.index, Y_to_predict)
     plt.plot(Y_to_predict.index, predict_y)
@@ -216,6 +185,7 @@ def program():
 
     #X_to_predict = X_to_predict[Y_to_predict > 2000]
     #Y_to_predict = Y_to_predict[Y_to_predict > 2000]
+
 
 if __name__ == "__main__":
     import warnings
